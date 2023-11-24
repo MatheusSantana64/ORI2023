@@ -16,7 +16,7 @@ int qsort_veiculos_idx(const void *a, const void *b) {
 
 /* Função de comparação entre chaves do índice pistas_idx */
 int qsort_pistas_idx(const void *a, const void *b) {
-    return strcmp( ( (pistas_index *)a )->id_pista, ( (pistas_index *)b )->id_pista);
+    return atoi(((pistas_index *)a)->id_pista) - atoi(((pistas_index *)b)->id_pista);
 }
 
 /* Função de comparação entre chaves do índice corridas_idx */
