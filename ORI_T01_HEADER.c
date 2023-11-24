@@ -1,23 +1,4 @@
-/* ==========================================================================
- * Universidade Federal de São Carlos - Campus Sorocaba
- * Disciplina: Organização de Recuperação da Informação
- * Prof. Tiago A. Almeida
- *
- * Trabalho 01 - Indexação
- *
- * ========================================================================== *
- *   <<< IMPLEMENTE AQUI!!! COPIE E COLE O CONTEÚDO DESTE ARQUIVO NO AVA >>>
- * ========================================================================== */
-
-/* Bibliotecas */
 #include "ORI_T01_HEADER.h"
-
-/* ===========================================================================
- * ================================= FUNÇÕES ================================= */
-
-
-/* <<< COLOQUE AQUI OS DEMAIS PROTÓTIPOS DE FUNÇÕES, SE NECESSÁRIO >>> */
-
 
 /* Funções auxiliares para o qsort.
  * Com uma pequena alteração, é possível utilizá-las no bsearch, assim, evitando código duplicado.
@@ -55,11 +36,11 @@ int qsort_nome_pista_idx(const void *a, const void *b){
 
 /* Função de comparação entre chaves do índice preco_veiculo_idx */
 int qsort_preco_veiculo_idx(const void *a, const void *b){
-    Veiculo *veiculo_a = (Veiculo *)a;
-    Veiculo *veiculo_b = (Veiculo *)b;
+    preco_veiculo_index *veiculo_a = (preco_veiculo_index *)a;
+    preco_veiculo_index *veiculo_b = (preco_veiculo_index *)b;
     if(veiculo_a->preco < veiculo_b->preco) return -1;
     else if(veiculo_a->preco > veiculo_b->preco) return 1;
-    else return 0;
+    else return strcmp(veiculo_a->id_veiculo, veiculo_b->id_veiculo);
 }
 
 /* Função de comparação entre chaves do índice secundário de corredor_veiculos_secundario_idx */
@@ -68,6 +49,7 @@ int qsort_corredor_veiculos_secundario_idx(const void *a, const void *b){
 }
 
 /* Cria o índice respectivo */
+//criar_corredores_idx() não deve ser modificada
 void criar_corredores_idx() {
     if (!corredores_idx)
         corredores_idx = malloc(MAX_REGISTROS * sizeof(corredores_index));
@@ -241,6 +223,7 @@ void criar_corredor_veiculos_idx() {
 }
 
 /* Exibe um registro com base no RRN */
+//exibir_corredor() não deve ser modificada
 bool exibir_corredor(int rrn) {
     if (rrn < 0)
         return false;
@@ -282,6 +265,7 @@ bool exibir_corrida(int rrn) {
 }
 
 /* Recupera do arquivo o registro com o RRN informado e retorna os dados nas structs */
+//recuperar_registro_corredor() não deve ser modificada
 Corredor recuperar_registro_corredor(int rrn) {
 	Corredor c;
 	char temp[TAM_REGISTRO_CORREDOR + 1], *p;
@@ -378,6 +362,7 @@ Corrida recuperar_registro_corrida(int rrn) {
 }
 
 /* Escreve em seu respectivo arquivo na posição informada (RRN) */
+//escrever_registro_corredor() não deve ser modificada
 void escrever_registro_corredor(Corredor c, int rrn) {
 	char temp[TAM_REGISTRO_CORREDOR + 1], p[100];
 	temp[0] = '\0'; p[0] = '\0';
@@ -414,7 +399,7 @@ void escrever_registro_veiculo(Veiculo v, int rrn) {
     char temp[TAM_REGISTRO_VEICULO + 1], p[100];
     temp[0] = '\0'; p[0] = '\0';
 
-    strcpy(temp, v.id_veiculo);
+    sprintf(temp, "%07d", atoi(v.id_veiculo));
     strcat(temp, ";");
     strcat(temp, v.marca);
     strcat(temp, ";");
@@ -422,16 +407,16 @@ void escrever_registro_veiculo(Veiculo v, int rrn) {
     strcat(temp, ";");
     strcat(temp, v.poder);
     strcat(temp, ";");
-    sprintf(p, "%d", v.velocidade);
+    sprintf(p, "%04d", v.velocidade);
     strcat(temp, p);
     strcat(temp, ";");
-    sprintf(p, "%d", v.aceleracao);
+    sprintf(p, "%04d", v.aceleracao);
     strcat(temp, p);
     strcat(temp, ";");
-    sprintf(p, "%d", v.peso);
+    sprintf(p, "%04d", v.peso);
     strcat(temp, p);
     strcat(temp, ";");
-    sprintf(p, "%.2lf", v.preco);
+    sprintf(p, "%013.2lf", v.preco);
     strcat(temp, p);
     strcat(temp, ";");
 
@@ -491,6 +476,10 @@ void cadastrar_corredor_menu(char *id_corredor, char *nome, char *apelido){
     strcpy(novo_corredor.apelido, apelido);
     novo_corredor.saldo = 0.0;
     current_datetime(novo_corredor.cadastro);
+
+    // Inicializa o array de veículos
+    for(int i = 0; i < QTD_MAX_VEICULO; ++i)
+        novo_corredor.veiculos[i][0] = '\0';
 
     // Verifica se o id_corredor já existe
     corredores_index chave;
@@ -626,7 +615,7 @@ void cadastrar_veiculo_menu(char *marca, char *modelo, char *poder, int velocida
 
     // Gera o ID do veículo
     char id_veiculo[TAM_ID_VEICULO];
-    sprintf(id_veiculo, "%04d", qtd_registros_veiculos + 1);
+    sprintf(id_veiculo, "%07d", qtd_registros_veiculos);
     strcpy(novo_veiculo.id_veiculo, id_veiculo);
 
     // Verifica se o ID do veículo já existe
@@ -645,11 +634,16 @@ void cadastrar_veiculo_menu(char *marca, char *modelo, char *poder, int velocida
     strcpy(veiculos_idx[qtd_registros_veiculos].id_veiculo, id_veiculo);
     veiculos_idx[qtd_registros_veiculos].rrn = qtd_registros_veiculos;
 
+    // Atualiza o índice de preços de veículos
+    preco_veiculo_idx[qtd_registros_veiculos].preco = preco;
+    strcpy(preco_veiculo_idx[qtd_registros_veiculos].id_veiculo, id_veiculo);
+
     // Incrementa a quantidade de registros de veículos
     qtd_registros_veiculos++;
 
-    // Reordena o índice de veículos
+    // Reordena os índices de veículos e preços de veículos
     qsort(veiculos_idx, qtd_registros_veiculos, sizeof(veiculos_index), qsort_veiculos_idx);
+    qsort(preco_veiculo_idx, qtd_registros_veiculos, sizeof(preco_veiculo_index), qsort_preco_veiculo_idx);
 
     printf(SUCESSO);
 }
@@ -668,6 +662,15 @@ void cadastrar_pista_menu(char *nome, int dificuldade, int distancia, int record
     sprintf(id_pista, "%04d", qtd_registros_pistas + 1);
     strcpy(nova_pista.id_pista, id_pista);
 
+    // Verifica se o nome da pista já existe
+    nome_pista_index chave;
+    strcpy(chave.nome, nome);
+    nome_pista_index *pista_existente = (nome_pista_index*) bsearch(&chave, nome_pista_idx, qtd_registros_pistas, sizeof(nome_pista_index), qsort_nome_pista_idx);
+    if (pista_existente != NULL) {
+        printf(ERRO_PK_REPETIDA, nome);
+        return;
+    }
+
     // Adiciona a nova pista ao final do arquivo de pistas
     escrever_registro_pista(nova_pista, qtd_registros_pistas);
 
@@ -675,11 +678,16 @@ void cadastrar_pista_menu(char *nome, int dificuldade, int distancia, int record
     strcpy(pistas_idx[qtd_registros_pistas].id_pista, id_pista);
     pistas_idx[qtd_registros_pistas].rrn = qtd_registros_pistas;
 
+    // Atualiza o índice de nomes de pistas
+    strcpy(nome_pista_idx[qtd_registros_pistas].nome, nome);
+    strcpy(nome_pista_idx[qtd_registros_pistas].id_pista, id_pista);
+
     // Incrementa a quantidade de registros de pistas
     qtd_registros_pistas++;
 
-    // Reordena o índice de pistas
+    // Reordena os índices de pistas e nomes de pistas
     qsort(pistas_idx, qtd_registros_pistas, sizeof(pistas_index), qsort_pistas_idx);
+    qsort(nome_pista_idx, qtd_registros_pistas, sizeof(nome_pista_index), qsort_nome_pista_idx);
 
     printf(SUCESSO);
 }
@@ -794,6 +802,7 @@ void executar_corrida_menu(char *id_pista, char *ocorrencia, char *id_corredores
 }
 
 /* Busca */
+//buscar_corredor_id_menu() não deve ser modificada
 void buscar_corredor_id_menu(char *id_corredor) {
 	corredores_index index;
 	strcpy(index.id_corredor, id_corredor);
@@ -805,16 +814,47 @@ void buscar_corredor_id_menu(char *id_corredor) {
 }
 
 void buscar_pista_id_menu(char *id_pista) {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "buscar_pista_id_menu()");
+    pistas_index chave;
+    strcpy(chave.id_pista, id_pista);
+
+    pistas_index *pista_encontrada = (pistas_index*) busca_binaria((void*)&chave, pistas_idx, qtd_registros_pistas, sizeof(pistas_index), qsort_pistas_idx, true, 0);
+
+    if (pista_encontrada == NULL || pista_encontrada->rrn < 0) {
+        printf(ERRO_REGISTRO_NAO_ENCONTRADO);
+    } else {
+        exibir_pista(pista_encontrada->rrn);
+    }
 }
 
 void buscar_pista_nome_menu(char *nome_pista) {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "buscar_pista_nome_menu()");
+    // Buscar a pista pelo nome no índice secundário
+    nome_pista_index chave;
+    strcpy(chave.nome, nome_pista);
+    nome_pista_index *pista_encontrada = (nome_pista_index*) busca_binaria((void*)&chave, nome_pista_idx, qtd_registros_pistas, sizeof(nome_pista_index), qsort_nome_pista_idx, true, 0);
+
+    // Se a pista não foi encontrada, exibir uma mensagem de erro
+    if (pista_encontrada == NULL) {
+        printf(ERRO_REGISTRO_NAO_ENCONTRADO);
+        return;
+    }
+
+    // Buscar a pista pelo id no índice primário
+    pistas_index chave_primaria;
+    strcpy(chave_primaria.id_pista, pista_encontrada->id_pista);
+    pistas_index *pista_final = (pistas_index*) busca_binaria((void*)&chave_primaria, pistas_idx, qtd_registros_pistas, sizeof(pistas_index), qsort_pistas_idx, true, 0);
+
+    // Se a pista não foi encontrada, exibir uma mensagem de erro
+    if (pista_final == NULL || pista_final->rrn < 0) {
+        printf(ERRO_REGISTRO_NAO_ENCONTRADO);
+        return;
+    }
+
+    // Exibir os dados da pista
+    exibir_pista(pista_final->rrn);
 }
 
 /* Listagem */
+//listar_corredores_id_menu() não deve ser modificada
 void listar_corredores_id_menu() {
 	if (qtd_registros_corredores == 0)
 		printf(AVISO_NENHUM_REGISTRO_ENCONTRADO);
@@ -917,6 +957,7 @@ void liberar_espaco_menu() {
 }
 
 /* Imprimir arquivos de dados */
+//Estas funções de imprimir arquivo não devem ser modificadas 
 void imprimir_arquivo_corredores_menu() {
 	if (qtd_registros_corredores == 0)
 		printf(ERRO_ARQUIVO_VAZIO);
@@ -946,6 +987,7 @@ void imprimir_arquivo_corridas_menu() {
 }
 
 /* Imprimir índices primários */
+//imprimir_corredores_idx_menu() não deve ser modificada
 void imprimir_corredores_idx_menu() {
 	if (corredores_idx == NULL || qtd_registros_corredores == 0)
 		printf(ERRO_ARQUIVO_VAZIO);
@@ -959,7 +1001,7 @@ void imprimir_veiculos_idx_menu() {
         printf(ERRO_ARQUIVO_VAZIO);
     else
         for (unsigned int i = 0; i < qtd_registros_veiculos; ++i)
-            exibir_veiculo(veiculos_idx[i].rrn);
+            printf("%07d, %d\n", atoi(veiculos_idx[i].id_veiculo), veiculos_idx[i].rrn);
 }
 
 void imprimir_pistas_idx_menu() {
@@ -991,8 +1033,9 @@ void imprimir_preco_veiculo_idx_menu() {
     if (qtd_registros_veiculos == 0)
         printf(ERRO_ARQUIVO_VAZIO);
     else
-        for (unsigned int i = 0; i < qtd_registros_veiculos; ++i)
+        for (unsigned int i = 0; i < qtd_registros_veiculos; ++i){
             printf("%.2lf, %s\n", preco_veiculo_idx[i].preco, preco_veiculo_idx[i].id_veiculo);
+        }
 }
 
 void imprimir_corredor_veiculos_secundario_idx_menu() {
@@ -1121,12 +1164,19 @@ void* busca_binaria_com_reps(const void *key, const void *base0, size_t nmemb, s
     size_t mid;
     int cond;
 
+    if (exibir_caminho) {
+        printf("Registros percorridos: ");
+    }
+
     while (low < high) {
         mid = (low + high) / 2;
+
         if (exibir_caminho) {
-            printf("Caminho percorrido: %zu\n", mid);
+            printf("%zu ", mid);
         }
+
         cond = (*compar)(key, base + mid * size);
+
         if (cond < 0) {
             high = mid;
         } else if (cond > 0) {
@@ -1136,16 +1186,19 @@ void* busca_binaria_com_reps(const void *key, const void *base0, size_t nmemb, s
                 while (mid > 0 && (*compar)(key, base + (mid - 1) * size) == 0) {
                     mid--;
                     if (exibir_caminho) {
-                        printf("Caminho percorrido: %zu\n", mid);
+                        printf("%zu ", mid);
                     }
                 }
             } else if (posicao_caso_repetido == 1) { // last occurrence
                 while (mid < nmemb - 1 && (*compar)(key, base + (mid + 1) * size) == 0) {
                     mid++;
                     if (exibir_caminho) {
-                        printf("Caminho percorrido: %zu\n", mid);
+                        printf("%zu ", mid);
                     }
                 }
+            }
+            if (exibir_caminho) {
+                printf("\n");
             }
             return (void *)(base + mid * size);
         }
@@ -1153,13 +1206,24 @@ void* busca_binaria_com_reps(const void *key, const void *base0, size_t nmemb, s
 
     // key not found
     if (retorno_se_nao_encontrado == -1 && low > 0) { // predecessor
+        if (exibir_caminho) {
+            printf("%zu \n", low - 1);
+        }
         return (void *)(base + (low - 1) * size);
     } else if (retorno_se_nao_encontrado == 1 && low < nmemb) { // successor
+        if (exibir_caminho) {
+            printf("%zu \n", low);
+        }
         return (void *)(base + low * size);
+    }
+
+    if (exibir_caminho) {
+        printf("\n");
     }
     return NULL;
 }
 
+//As funções abaixo não devem ser modificadas
 void* busca_binaria(const void *key, const void *base0, size_t nmemb, size_t size, int (*compar)(const void *, const void *), bool exibir_caminho, int retorno_se_nao_encontrado) {
 	return busca_binaria_com_reps(key, base0, nmemb, size, compar, exibir_caminho, 0, retorno_se_nao_encontrado);
 }
